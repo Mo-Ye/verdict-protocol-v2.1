@@ -1,0 +1,10 @@
+node_modules/
+test-ledger/
+.anchor/
+validator.log
+
+# Keep target/idl and target/deploy/*.so, ignore the rest
+target/*
+!target/idl/
+!target/deploy/
+target/deploy/*-keypair.json
