@@ -82,11 +82,13 @@ pub fn buy_shares_handler(ctx: Context<BuyShares>, amount_in: u64, is_yes: bool)
     let total_fee = amount_in
         .checked_mul(FEE_BPS)
         .ok_or(VerdictError::Overflow)?
-        / 10_000;
+        .checked_div(10_000)
+        .ok_or(VerdictError::Overflow)?;
     let protocol_fee = amount_in
         .checked_mul(PROTOCOL_FEE_BPS)
         .ok_or(VerdictError::Overflow)?
-        / 10_000;
+        .checked_div(10_000)
+        .ok_or(VerdictError::Overflow)?;
     // Creator fee is whatever remains of the total fee after the protocol cut (1%).
     let creator_fee = total_fee
         .checked_sub(protocol_fee)
@@ -166,14 +168,18 @@ pub fn buy_shares_handler(ctx: Context<BuyShares>, amount_in: u64, is_yes: bool)
             .checked_sub(new_no_pool)
             .ok_or(VerdictError::Overflow)?;
 
-        market.yes_pool = new_yes_pool as u64;
-        market.no_pool = new_no_pool as u64;
+        market.yes_pool = u64::try_from(new_yes_pool)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
+        market.no_pool = u64::try_from(new_no_pool)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
+        let shares_u64 = u64::try_from(shares)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
         market.total_yes_shares = market
             .total_yes_shares
-            .checked_add(shares as u64)
+            .checked_add(shares_u64)
             .ok_or(VerdictError::Overflow)?;
 
-        shares as u64
+        shares_u64
     } else {
         // Buying NO shares: add liquidity to NO pool, get shares from YES pool shrinkage
         let new_no_pool = (market.no_pool as u128)
@@ -188,14 +194,18 @@ pub fn buy_shares_handler(ctx: Context<BuyShares>, amount_in: u64, is_yes: bool)
             .checked_sub(new_yes_pool)
             .ok_or(VerdictError::Overflow)?;
 
-        market.no_pool = new_no_pool as u64;
-        market.yes_pool = new_yes_pool as u64;
+        market.no_pool = u64::try_from(new_no_pool)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
+        market.yes_pool = u64::try_from(new_yes_pool)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
+        let shares_u64 = u64::try_from(shares)
+            .map_err(|_| VerdictError::ConversionOverflow)?;
         market.total_no_shares = market
             .total_no_shares
-            .checked_add(shares as u64)
+            .checked_add(shares_u64)
             .ok_or(VerdictError::Overflow)?;
 
-        shares as u64
+        shares_u64
     };
 
     // Guard: reject trades that would yield zero shares (e.g. dust amounts

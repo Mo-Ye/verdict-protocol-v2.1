@@ -28,4 +28,12 @@ pub enum VerdictError {
     Overflow,
     #[msg("Insufficient treasury balance for withdrawal")]
     InsufficientTreasuryBalance,
+    #[msg("Market outcome is missing despite being marked resolved")]
+    MissingOutcome,
+    #[msg("Vault balance is below rent-exempt minimum — nothing to distribute")]
+    EmptyVault,
+    #[msg("Numeric conversion overflow (u128 to u64)")]
+    ConversionOverflow,
+    #[msg("Withdrawal would leave treasury below rent-exempt minimum")]
+    TreasuryRentExempt,
 }

@@ -51,7 +51,7 @@ pub fn claim_winnings_handler(ctx: Context<ClaimWinnings>) -> Result<()> {
     require!(!position.claimed, VerdictError::AlreadyClaimed);
 
     // Determine if user is a winner and calculate payout
-    let outcome = market.outcome.unwrap(); // Safe because market.resolved is true
+    let outcome = market.outcome.ok_or(VerdictError::MissingOutcome)?;
 
     let (user_shares, total_shares) = if outcome {
         // YES won
@@ -77,15 +77,21 @@ pub fn claim_winnings_handler(ctx: Context<ClaimWinnings>) -> Result<()> {
     let market_mut = &mut ctx.accounts.market;
     if market_mut.winning_pot == 0 {
         let vault_balance = ctx.accounts.vault.lamports();
-        market_mut.winning_pot = vault_balance.saturating_sub(rent_exempt);
+        require!(vault_balance > rent_exempt, VerdictError::EmptyVault);
+        market_mut.winning_pot = vault_balance
+            .checked_sub(rent_exempt)
+            .ok_or(VerdictError::Overflow)?;
     }
     let pot = market_mut.winning_pot;
 
-    let payout = (pot as u128)
+    require!(total_shares > 0, VerdictError::InsufficientShares);
+    let payout: u64 = (pot as u128)
         .checked_mul(user_shares as u128)
         .ok_or(VerdictError::Overflow)?
         .checked_div(total_shares as u128)
-        .ok_or(VerdictError::Overflow)? as u64;
+        .ok_or(VerdictError::Overflow)?
+        .try_into()
+        .map_err(|_| VerdictError::ConversionOverflow)?;
 
     // Transfer SOL from vault PDA to user using invoke_signed
     // The vault is a system-owned PDA, so we use system_program::transfer with signer seeds

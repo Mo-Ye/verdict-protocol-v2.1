@@ -42,6 +42,10 @@ pub fn withdraw_protocol_fees_handler(
         amount <= withdrawable,
         VerdictError::InsufficientTreasuryBalance
     );
+    require!(
+        treasury_balance.checked_sub(amount).unwrap_or(0) >= rent_exempt,
+        VerdictError::TreasuryRentExempt
+    );
 
     let treasury_bump = ctx.bumps.treasury;
     let signer_seeds: &[&[u8]] = &[b"treasury", &[treasury_bump]];

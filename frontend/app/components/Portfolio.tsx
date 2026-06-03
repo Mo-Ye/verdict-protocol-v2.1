@@ -51,8 +51,11 @@ export default function Portfolio({ markets, program }: PortfolioProps) {
             const bal = await program.provider.connection.getBalance(vaultPDA);
             setVaultBalances(prev => ({ ...prev, [market.publicKey.toString()]: bal }));
           }
-        } catch {
-          // No position for this market
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (!msg.includes('Account does not exist') && !msg.includes('Could not find')) {
+            console.error(`Failed to load position for market ${market.publicKey.toString()}:`, e);
+          }
         }
       }
       setPositions(results);
