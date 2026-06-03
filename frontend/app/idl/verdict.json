@@ -1,0 +1,626 @@
+{
+  "address": "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L",
+  "metadata": {
+    "name": "verdict",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "create_market",
+      "discriminator": [
+        103,
+        226,
+        97,
+        235,
+        200,
+        188,
+        251,
+        254
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "question"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator_fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  97,
+                  116,
+                  111,
+                  114,
+                  95,
+                  102,
+                  101,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "question",
+          "type": "string"
+        },
+        {
+          "name": "end_timestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "buy_shares",
+      "discriminator": [
+        40,
+        239,
+        138,
+        154,
+        8,
+        37,
+        106,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "user_position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator_fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  97,
+                  116,
+                  111,
+                  114,
+                  95,
+                  102,
+                  101,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount_in",
+          "type": "u64"
+        },
+        {
+          "name": "is_yes",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "resolve_market",
+      "discriminator": [
+        155,
+        23,
+        80,
+        173,
+        46,
+        74,
+        23,
+        239
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "creator_fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  97,
+                  116,
+                  111,
+                  114,
+                  95,
+                  102,
+                  101,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator_wallet",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "outcome",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "claim_winnings",
+      "discriminator": [
+        161,
+        215,
+        24,
+        59,
+        14,
+        236,
+        242,
+        221
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "user_position",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw_protocol_fees",
+      "discriminator": [
+        11,
+        68,
+        165,
+        98,
+        18,
+        208,
+        134,
+        73
+      ],
+      "accounts": [
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    },
+    {
+      "name": "UserPosition",
+      "discriminator": [
+        251,
+        248,
+        209,
+        245,
+        83,
+        234,
+        17,
+        27
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "EmptyQuestion",
+      "msg": "Question cannot be empty"
+    },
+    {
+      "code": 6001,
+      "name": "QuestionTooLong",
+      "msg": "Question exceeds maximum length of 200 characters"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidTimestamp",
+      "msg": "End timestamp must be in the future"
+    },
+    {
+      "code": 6003,
+      "name": "MarketExpired",
+      "msg": "Market has expired"
+    },
+    {
+      "code": 6004,
+      "name": "MarketNotExpiredYet",
+      "msg": "Market has not expired yet"
+    },
+    {
+      "code": 6005,
+      "name": "MarketAlreadyResolved",
+      "msg": "Market has already been resolved"
+    },
+    {
+      "code": 6006,
+      "name": "MarketNotResolved",
+      "msg": "Market has not been resolved yet"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientShares",
+      "msg": "Insufficient shares to sell or claim"
+    },
+    {
+      "code": 6008,
+      "name": "AlreadyClaimed",
+      "msg": "Winnings have already been claimed"
+    },
+    {
+      "code": 6009,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: only admin can perform this action"
+    },
+    {
+      "code": 6010,
+      "name": "ZeroAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6011,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6012,
+      "name": "InsufficientTreasuryBalance",
+      "msg": "Insufficient treasury balance for withdrawal"
+    }
+  ],
+  "types": [
+    {
+      "name": "Market",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "name": "end_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "yes_pool",
+            "type": "u64"
+          },
+          {
+            "name": "no_pool",
+            "type": "u64"
+          },
+          {
+            "name": "total_yes_shares",
+            "type": "u64"
+          },
+          {
+            "name": "total_no_shares",
+            "type": "u64"
+          },
+          {
+            "name": "resolved",
+            "type": "bool"
+          },
+          {
+            "name": "outcome",
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator_fee_accumulated",
+            "type": "u64"
+          },
+          {
+            "name": "winning_pot",
+            "type": "u64"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "creator_fee_vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserPosition",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "yes_shares",
+            "type": "u64"
+          },
+          {
+            "name": "no_shares",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
