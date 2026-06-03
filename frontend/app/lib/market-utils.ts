@@ -118,3 +118,25 @@ export function timeUntil(timestamp: number): string {
   const minutes = Math.floor((diff % 3600) / 60);
   return `${hours}h ${minutes}m`;
 }
+
+export function isWinningPosition(
+  outcome: boolean | null,
+  yesShares: number,
+  noShares: number,
+): boolean {
+  if (outcome === null) return false;
+  return (outcome && yesShares > 0) || (!outcome && noShares > 0);
+}
+
+export function calculateEstimatedPayout(
+  vaultBalance: number,
+  userWinShares: number,
+  totalWinShares: number,
+): number {
+  if (totalWinShares === 0) return 0;
+  return (vaultBalance * userWinShares) / totalWinShares / LAMPORTS_PER_SOL;
+}
+
+export function extractErrorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}

@@ -21,3 +21,17 @@ export const LOCALE_FLAGS: Record<Locale, string> = {
   ru: '\uD83C\uDDF7\uD83C\uDDFA',
   sr: '\uD83C\uDDF7\uD83C\uDDF8',
 };
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  crypto: 'bg-orange-500/20 text-orange-300',
+  politics: 'bg-blue-500/20 text-blue-300',
+  sports: 'bg-green-500/20 text-green-300',
+  tech: 'bg-purple-500/20 text-purple-300',
+  other: 'bg-gray-500/20 text-gray-300',
+};
+
+export const STATUS_COLORS: Record<string, string> = {
+  active: 'bg-emerald-500/20 text-emerald-300',
+  expired: 'bg-yellow-500/20 text-yellow-300',
+  resolved: 'bg-blue-500/20 text-blue-300',
+};
