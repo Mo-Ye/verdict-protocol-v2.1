@@ -8,6 +8,9 @@ import { Program } from '@coral-xyz/anchor';
 import BN from 'bn.js';
 import { CATEGORIES, type Category } from '../lib/constants';
 import { findMarketPDA, findVaultPDA, findCreatorFeeVaultPDA } from '../lib/pda';
+import { extractErrorMessage } from '../lib/market-utils';
+import StatusBanner from './ui/StatusBanner';
+import ConnectWalletPlaceholder from './ui/ConnectWalletPlaceholder';
 
 interface CreateMarketProps {
   program: Program | null;
@@ -52,18 +55,15 @@ export default function CreateMarket({ program, onCreated }: CreateMarketProps) 
       setEndDate('');
       onCreated();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStatusMsg(`${t('common.error')}: ${msg}`);
+      setStatusMsg(`${t('common.error')}: ${extractErrorMessage(e)}`);
     }
     setLoading(false);
   };
 
   if (!publicKey) {
     return (
-      <div className="max-w-lg mx-auto text-center py-20">
-        <div className="text-4xl mb-4">&#9878;&#65039;</div>
-        <h2 className="text-xl font-semibold text-white mb-2">{t('create.title')}</h2>
-        <p className="text-gray-400 text-sm">{t('common.connectWallet')}</p>
+      <div className="max-w-lg mx-auto">
+        <ConnectWalletPlaceholder emoji="&#9878;&#65039;" titleKey="create.title" />
       </div>
     );
   }
@@ -72,11 +72,7 @@ export default function CreateMarket({ program, onCreated }: CreateMarketProps) 
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-white mb-6">{t('create.title')}</h1>
 
-      {statusMsg && (
-        <div className="mb-4 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300">
-          {statusMsg}
-        </div>
-      )}
+      <StatusBanner message={statusMsg} />
 
       <div className="bg-[#141524] border border-white/5 rounded-xl p-6 space-y-5">
         <div>

@@ -4,18 +4,22 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Program } from '@coral-xyz/anchor';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  calculatePrices,
+  calculatePositionValue,
+  calculateEstimatedPayout,
+  isWinningPosition,
   formatSol,
   type MarketWithKey,
   type UserPositionAccount,
 } from '../lib/market-utils';
 import { findPositionPDA, findVaultPDA } from '../lib/pda';
 import { PublicKey } from '@solana/web3.js';
+
+import ConnectWalletPlaceholder from './ui/ConnectWalletPlaceholder';
 
 interface PortfolioProps {
   markets: MarketWithKey[];
@@ -62,23 +66,15 @@ export default function Portfolio({ markets, program }: PortfolioProps) {
   }, [program, publicKey, markets]);
 
   if (!publicKey) {
-    return (
-      <div className="text-center py-20">
-        <div className="text-4xl mb-4">&#128188;</div>
-        <h2 className="text-xl font-semibold text-white mb-2">{t('portfolio.title')}</h2>
-        <p className="text-gray-400 text-sm">{t('common.connectWallet')}</p>
-      </div>
-    );
+    return <ConnectWalletPlaceholder emoji="&#128188;" titleKey="portfolio.title" />;
   }
 
   const totalValue = positions.reduce((acc, { market, position }) => {
     const m = market.account;
     const yp = m.yesPool.toNumber();
     const np = m.noPool.toNumber();
-    const total = yp + np;
-    if (total === 0) return acc;
-    const yesVal = (position.yesShares.toNumber() * (np / total)) / LAMPORTS_PER_SOL;
-    const noVal = (position.noShares.toNumber() * (yp / total)) / LAMPORTS_PER_SOL;
+    const yesVal = calculatePositionValue(position.yesShares.toNumber(), true, yp, np);
+    const noVal = calculatePositionValue(position.noShares.toNumber(), false, yp, np);
     return acc + yesVal + noVal;
   }, 0);
 
@@ -120,17 +116,14 @@ export default function Portfolio({ markets, program }: PortfolioProps) {
 
         {positions.map(({ market, position }, i) => {
           const m = market.account;
-          const { yesPrice, noPrice } = calculatePrices(m.yesPool.toNumber(), m.noPool.toNumber());
           const yesShares = position.yesShares.toNumber();
           const noShares = position.noShares.toNumber();
-          const yesVal = (yesShares * (noPrice / 100)) / LAMPORTS_PER_SOL;
-          const noVal = (noShares * (yesPrice / 100)) / LAMPORTS_PER_SOL;
+          const yesVal = calculatePositionValue(yesShares, true, m.yesPool.toNumber(), m.noPool.toNumber());
+          const noVal = calculatePositionValue(noShares, false, m.yesPool.toNumber(), m.noPool.toNumber());
           const vaultBal = vaultBalances[market.publicKey.toString()] ?? 0;
           const totalWinShares = m.outcome ? m.totalYesShares.toNumber() : m.totalNoShares.toNumber();
           const userWinShares = m.outcome ? yesShares : noShares;
-          const estimatedPayout = totalWinShares > 0 
-            ? (vaultBal * userWinShares) / totalWinShares / LAMPORTS_PER_SOL 
-            : 0;
+          const estimatedPayout = calculateEstimatedPayout(vaultBal, userWinShares, totalWinShares);
 
 
           return (
@@ -143,11 +136,11 @@ export default function Portfolio({ markets, program }: PortfolioProps) {
                 {m.resolved && (
                   <div className="flex items-center gap-1">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ml-2 shrink-0 ${
-                      (m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)
+                      isWinningPosition(m.outcome, yesShares, noShares)
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : 'bg-red-500/20 text-red-400'
                     }`}>
-                      {(m.outcome && yesShares > 0) || (!m.outcome && noShares > 0) ? '✓ Won' : '✗ Lost'}
+                      {isWinningPosition(m.outcome, yesShares, noShares) ? '✓ Won' : '✗ Lost'}
                     </span>
                     {estimatedPayout > 0 && (
                       <span className="text-emerald-400 text-xs">+{estimatedPayout.toFixed(4)} SOL</span>

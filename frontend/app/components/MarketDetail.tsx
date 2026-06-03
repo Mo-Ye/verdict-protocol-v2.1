@@ -17,11 +17,15 @@ import {
   timeUntil,
   formatSol,
   guessCategory,
+  isWinningPosition,
+  calculateEstimatedPayout,
+  extractErrorMessage,
   type MarketWithKey,
   type UserPositionAccount,
 } from '../lib/market-utils';
 import { findVaultPDA, findCreatorFeeVaultPDA, findPositionPDA, findTreasuryPDA } from '../lib/pda';
-import { PROTOCOL_ADMIN } from '../lib/constants';
+import { PROTOCOL_ADMIN, CATEGORY_COLORS } from '../lib/constants';
+import StatusBanner from './ui/StatusBanner';
 
 interface MarketDetailProps {
   market: MarketWithKey;
@@ -43,7 +47,6 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
   const [buyAmount, setBuyAmount] = useState('0.01');
   const [isYes, setIsYes] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [vaultBalances, setVaultBalances] = useState<Record<string, number>>({});
   const [statusMsg, setStatusMsg] = useState('');
   const [position, setPosition] = useState<UserPositionAccount | null>(null);
   const [priceHistory, setPriceHistory] = useState<{ time: string; yes: number; no: number }[]>([]);
@@ -125,8 +128,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
       onRefresh();
       loadPosition();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStatusMsg(`${t('common.error')}: ${msg}`);
+      setStatusMsg(`${t('common.error')}: ${extractErrorMessage(e)}`);
     }
     setLoading(false);
   };
@@ -154,8 +156,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
         setMarketData(updated);
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStatusMsg(`${t('common.error')}: ${msg}`);
+      setStatusMsg(`${t('common.error')}: ${extractErrorMessage(e)}`);
     }
     setLoading(false);
   };
@@ -192,8 +193,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
       onRefresh();
       loadPosition();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStatusMsg(`${t('common.error')}: ${msg}`);
+      setStatusMsg(`${t('common.error')}: ${extractErrorMessage(e)}`);
     }
     setLoading(false);
   };
@@ -201,14 +201,6 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
   const yesShares = position?.yesShares?.toNumber() ?? 0;
   const noShares = position?.noShares?.toNumber() ?? 0;
   const hasPosition = yesShares > 0 || noShares > 0;
-
-  const categoryColors: Record<string, string> = {
-    crypto: 'bg-orange-500/20 text-orange-300',
-    politics: 'bg-blue-500/20 text-blue-300',
-    sports: 'bg-green-500/20 text-green-300',
-    tech: 'bg-purple-500/20 text-purple-300',
-    other: 'bg-gray-500/20 text-gray-300',
-  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -222,18 +214,14 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
         {t('common.back')}
       </button>
 
-      {statusMsg && (
-        <div className="mb-4 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300">
-          {statusMsg}
-        </div>
-      )}
-      {(claimAmount !== null || position?.claimed) && ((m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)) && (
+      <StatusBanner message={statusMsg} />
+      {(claimAmount !== null || position?.claimed) && isWinningPosition(m.outcome, yesShares, noShares) && (
         <div className="mb-4 px-4 py-3 rounded-lg text-sm font-semibold bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
           🎉 You won this market!
         </div>
       )}
 
-      {status === 'resolved' && hasPosition && !((m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)) && (
+      {status === 'resolved' && hasPosition && !isWinningPosition(m.outcome, yesShares, noShares) && (
         <div className="mb-4 px-4 py-3 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/30 text-red-400">
           ❌ You lost this market.
         </div>
@@ -244,7 +232,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-[#141524] border border-white/5 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${categoryColors[category]}`}>
+              <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${CATEGORY_COLORS[category]}`}>
                 {t(`categories.${category}`)}
               </span>
               {status === 'active' && (
@@ -308,16 +296,15 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
             </h2>
             {status === 'resolved' && (
               <div className={`mb-4 p-3 rounded-lg text-sm font-semibold ${
-                (m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)
+                isWinningPosition(m.outcome, yesShares, noShares)
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'bg-red-500/20 text-red-400'
               }`}>
-                {(m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)
-                  ? t('trade.winningPosition', { amount: (
-                      vaultBal * 
-                      (m.outcome ? yesShares : noShares) / 
-                      (m.outcome ? m.totalYesShares.toNumber() : m.totalNoShares.toNumber()) / 
-                      LAMPORTS_PER_SOL
+                {isWinningPosition(m.outcome, yesShares, noShares)
+                  ? t('trade.winningPosition', { amount: calculateEstimatedPayout(
+                      vaultBal,
+                      m.outcome ? yesShares : noShares,
+                      m.outcome ? m.totalYesShares.toNumber() : m.totalNoShares.toNumber()
                     ).toFixed(4) })
                   : t('trade.losingPosition', { amount: (
                       (m.outcome ? noShares : yesShares) / LAMPORTS_PER_SOL

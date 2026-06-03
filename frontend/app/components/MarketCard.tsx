@@ -9,6 +9,7 @@ import {
   guessCategory,
   type MarketWithKey,
 } from '../lib/market-utils';
+import { CATEGORY_COLORS, STATUS_COLORS } from '../lib/constants';
 
 interface MarketCardProps {
   market: MarketWithKey;
@@ -22,20 +23,6 @@ export default function MarketCard({ market, onClick }: MarketCardProps) {
   const { yesPrice, noPrice } = calculatePrices(m.yesPool.toNumber(), m.noPool.toNumber());
   const category = guessCategory(m.question);
 
-  const categoryColors: Record<string, string> = {
-    crypto: 'bg-orange-500/20 text-orange-300',
-    politics: 'bg-blue-500/20 text-blue-300',
-    sports: 'bg-green-500/20 text-green-300',
-    tech: 'bg-purple-500/20 text-purple-300',
-    other: 'bg-gray-500/20 text-gray-300',
-  };
-
-  const statusBadge = {
-    active: 'bg-emerald-500/20 text-emerald-300',
-    expired: 'bg-yellow-500/20 text-yellow-300',
-    resolved: 'bg-blue-500/20 text-blue-300',
-  };
-
   return (
     <div
       onClick={onClick}
@@ -43,10 +30,10 @@ export default function MarketCard({ market, onClick }: MarketCardProps) {
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${categoryColors[category]}`}>
+          <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${CATEGORY_COLORS[category]}`}>
             {t(`categories.${category}`)}
           </span>
-          <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${statusBadge[status]}`}>
+          <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[status]}`}>
             {t(`markets.${status}`)}
           </span>
         </div>
