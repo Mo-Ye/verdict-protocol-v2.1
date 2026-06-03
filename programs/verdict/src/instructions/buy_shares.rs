@@ -67,6 +67,7 @@ pub fn buy_shares_handler(
     ctx: Context<BuyShares>,
     amount_in: u64,
     is_yes: bool,
+    min_shares_out: u64,
 ) -> Result<()> {
     let market = &ctx.accounts.market;
 
@@ -192,6 +193,11 @@ pub fn buy_shares_handler(
 
         shares as u64
     };
+
+    // Slippage protection: revert if the trade yields fewer shares than the caller expects.
+    if min_shares_out > 0 {
+        require!(shares_out >= min_shares_out, VerdictError::SlippageExceeded);
+    }
 
     // Update user position
     let position = &mut ctx.accounts.user_position;

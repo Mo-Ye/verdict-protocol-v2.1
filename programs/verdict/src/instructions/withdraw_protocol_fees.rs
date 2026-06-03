@@ -32,10 +32,12 @@ pub fn withdraw_protocol_fees_handler(
     );
     require!(amount > 0, VerdictError::ZeroAmount);
 
-    // Cannot withdraw more than the treasury holds.
+    // Cannot withdraw more than the treasury holds above its rent-exempt minimum.
     let treasury_balance = ctx.accounts.treasury.lamports();
+    let rent_exempt = Rent::get()?.minimum_balance(0);
+    let withdrawable = treasury_balance.saturating_sub(rent_exempt);
     require!(
-        amount <= treasury_balance,
+        amount <= withdrawable,
         VerdictError::InsufficientTreasuryBalance
     );
 

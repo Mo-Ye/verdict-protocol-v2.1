@@ -8,3 +8,12 @@ target/*
 !target/idl/
 !target/deploy/
 target/deploy/*-keypair.json
+
+# Never commit keypairs / secret keys
+tests/fixtures/admin.json
+
+# Editor swap / backup files
+*.save
+*.swp
+*.swo
+*~
