@@ -1,7 +1,7 @@
-use anchor_lang::prelude::*;
-use anchor_lang::system_program;
 use crate::errors::VerdictError;
 use crate::instructions::resolve_market::PROTOCOL_ADMIN;
+use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 
 #[derive(Accounts)]
 pub struct WithdrawProtocolFees<'info> {
@@ -32,10 +32,14 @@ pub fn withdraw_protocol_fees_handler(
     );
     require!(amount > 0, VerdictError::ZeroAmount);
 
-    // Cannot withdraw more than the treasury holds.
+    // Cannot withdraw so much that the treasury drops below rent-exempt minimum.
+    // Without this guard the admin could drain all lamports, making the PDA
+    // non-rent-exempt and causing future fee deposits to fail.
     let treasury_balance = ctx.accounts.treasury.lamports();
+    let rent_exempt = Rent::get()?.minimum_balance(0);
+    let withdrawable = treasury_balance.saturating_sub(rent_exempt);
     require!(
-        amount <= treasury_balance,
+        amount <= withdrawable,
         VerdictError::InsufficientTreasuryBalance
     );
 
