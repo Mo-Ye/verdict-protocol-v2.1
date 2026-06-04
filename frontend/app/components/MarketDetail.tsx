@@ -56,8 +56,14 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
       const [positionPDA] = findPositionPDA(marketPDA, publicKey);
       const pos = await (program.account as any).userPosition.fetch(positionPDA);
       setPosition(pos as unknown as UserPositionAccount);
-    } catch {
-      setPosition(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('Account does not exist') || msg.includes('Could not find')) {
+        setPosition(null);
+      } else {
+        console.error('Failed to load user position:', e);
+        setPosition(null);
+      }
     }
   }, [program, publicKey, marketPDA]);
 
@@ -78,11 +84,15 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
   useEffect(() => {
     const loadVault = async () => {
       if (!program) return;
-      const [vaultPDA] = findVaultPDA(marketPDA);
-      const bal = await program.provider.connection.getBalance(vaultPDA);
-      setVaultBal(bal);
+      try {
+        const [vaultPDA] = findVaultPDA(marketPDA);
+        const bal = await program.provider.connection.getBalance(vaultPDA);
+        setVaultBal(bal);
+      } catch (e) {
+        console.error('Failed to load vault balance:', e);
+      }
     };
-    loadVault();  
+    loadVault();
   }, [program, marketPDA]);
 
   useEffect(() => {

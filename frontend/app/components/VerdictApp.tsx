@@ -30,14 +30,18 @@
     const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [sortBy, setSortBy] = useState<SortOption>('newest');
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const loadMarkets = useCallback(async () => {
       if (!readonlyProgram) return;
       try {
+        setLoadError(null);
         const allMarkets = await (readonlyProgram.account as any).market.all();
         setMarkets(allMarkets as unknown as MarketWithKey[]);
       } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
         console.error('Failed to load markets:', e);
+        setLoadError(msg);
       }
     }, [program]);
 
@@ -121,6 +125,12 @@
                   </button>
                 ))}
               </div>
+
+              {loadError && (
+                <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                  {t('common.error')}: {loadError}
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {categoryOptions.map((c) => (
