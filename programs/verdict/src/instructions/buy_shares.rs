@@ -1,7 +1,7 @@
+use crate::errors::VerdictError;
+use crate::state::{Market, UserPosition};
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
-use crate::state::{Market, UserPosition};
-use crate::errors::VerdictError;
 
 /// Fee percentage in basis points (200 = 2%)
 const FEE_BPS: u64 = 200;
@@ -74,7 +74,10 @@ pub fn buy_shares_handler(
     // Validate market state
     require!(!market.resolved, VerdictError::MarketAlreadyResolved);
     let clock = Clock::get()?;
-    require!(clock.unix_timestamp < market.end_timestamp, VerdictError::MarketExpired);
+    require!(
+        clock.unix_timestamp < market.end_timestamp,
+        VerdictError::MarketExpired
+    );
     require!(amount_in > 0, VerdictError::ZeroAmount);
 
     // Calculate fees:
@@ -160,6 +163,8 @@ pub fn buy_shares_handler(
             .checked_add(amount_after_fee as u128)
             .ok_or(VerdictError::Overflow)?;
         let new_no_pool = k
+            .checked_add(new_yes_pool - 1)
+            .ok_or(VerdictError::Overflow)?
             .checked_div(new_yes_pool)
             .ok_or(VerdictError::Overflow)?;
         let shares = (market.no_pool as u128)
@@ -168,7 +173,8 @@ pub fn buy_shares_handler(
 
         market.yes_pool = new_yes_pool as u64;
         market.no_pool = new_no_pool as u64;
-        market.total_yes_shares = market.total_yes_shares
+        market.total_yes_shares = market
+            .total_yes_shares
             .checked_add(shares as u64)
             .ok_or(VerdictError::Overflow)?;
 
@@ -179,6 +185,8 @@ pub fn buy_shares_handler(
             .checked_add(amount_after_fee as u128)
             .ok_or(VerdictError::Overflow)?;
         let new_yes_pool = k
+            .checked_add(new_no_pool - 1)
+            .ok_or(VerdictError::Overflow)?
             .checked_div(new_no_pool)
             .ok_or(VerdictError::Overflow)?;
         let shares = (market.yes_pool as u128)
@@ -187,17 +195,23 @@ pub fn buy_shares_handler(
 
         market.no_pool = new_no_pool as u64;
         market.yes_pool = new_yes_pool as u64;
-        market.total_no_shares = market.total_no_shares
+        market.total_no_shares = market
+            .total_no_shares
             .checked_add(shares as u64)
             .ok_or(VerdictError::Overflow)?;
 
         shares as u64
     };
 
+    // Guard: reject trades that would yield zero shares (e.g. dust amounts
+    // where the AMM rounding consumes the entire input).
+    require!(shares_out > 0, VerdictError::ZeroAmount);
+
     // Slippage protection: revert if the trade yields fewer shares than the caller expects.
     if min_shares_out > 0 {
         require!(shares_out >= min_shares_out, VerdictError::SlippageExceeded);
     }
+
 
     // Update user position
     let position = &mut ctx.accounts.user_position;
@@ -210,11 +224,13 @@ pub fn buy_shares_handler(
     }
 
     if is_yes {
-        position.yes_shares = position.yes_shares
+        position.yes_shares = position
+            .yes_shares
             .checked_add(shares_out)
             .ok_or(VerdictError::Overflow)?;
     } else {
-        position.no_shares = position.no_shares
+        position.no_shares = position
+            .no_shares
             .checked_add(shares_out)
             .ok_or(VerdictError::Overflow)?;
     }

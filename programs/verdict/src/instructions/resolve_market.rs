@@ -1,7 +1,6 @@
-use anchor_lang::prelude::*;
-use anchor_lang::system_program;
-use crate::state::Market;
 use crate::errors::VerdictError;
+use crate::state::Market;
+use anchor_lang::prelude::*;
 
 /// Hardcoded protocol admin pubkey. The market creator OR this admin may resolve a market.
 #[cfg(not(feature = "local-admin"))]
@@ -43,16 +42,12 @@ pub struct ResolveMarket<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn resolve_market_handler(
-    ctx: Context<ResolveMarket>,
-    outcome: bool,
-) -> Result<()> {
+pub fn resolve_market_handler(ctx: Context<ResolveMarket>, outcome: bool) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     // Validate: only the market creator or the protocol admin can resolve
     require!(
-        ctx.accounts.admin.key() == market.creator
-            || ctx.accounts.admin.key() == PROTOCOL_ADMIN,
+        ctx.accounts.admin.key() == market.creator || ctx.accounts.admin.key() == PROTOCOL_ADMIN,
         VerdictError::Unauthorized
     );
 
@@ -70,27 +65,21 @@ pub fn resolve_market_handler(
     market.outcome = Some(outcome);
 
     // Automatically pay out the accumulated creator fee to the creator's wallet.
+    // Uses direct lamport transfer instead of CPI — the system_program::transfer
+    // CPI approach fails in production builds (non-local-admin) for system-owned
+    // PDA vaults.
     let creator_fee = market.creator_fee_accumulated;
     if creator_fee > 0 {
-        let market_key = market.key();
-        let creator_fee_vault_bump = market.creator_fee_vault_bump;
-        let signer_seeds: &[&[u8]] = &[
-            b"creator_fee",
-            market_key.as_ref(),
-            &[creator_fee_vault_bump],
-        ];
-
-        system_program::transfer(
-            CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                system_program::Transfer {
-                    from: ctx.accounts.creator_fee_vault.to_account_info(),
-                    to: ctx.accounts.creator_wallet.to_account_info(),
-                },
-                &[signer_seeds],
-            ),
-            creator_fee,
-        )?;
+        **ctx
+            .accounts
+            .creator_fee_vault
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= creator_fee;
+        **ctx
+            .accounts
+            .creator_wallet
+            .to_account_info()
+            .try_borrow_mut_lamports()? += creator_fee;
 
         market.creator_fee_accumulated = 0;
     }

@@ -15,7 +15,7 @@ import BN from "bn.js";
 const idl = require("../target/idl/verdict.json");
 
 const PROGRAM_ID = new PublicKey(
-  "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L"
+  "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L",
 );
 
 function getQuestionHash(question: string): Buffer {
@@ -25,45 +25,43 @@ function getQuestionHash(question: string): Buffer {
 
 function findMarketPDA(
   creator: PublicKey,
-  question: string
+  question: string,
 ): [PublicKey, number] {
   const questionHash = getQuestionHash(question);
   return PublicKey.findProgramAddressSync(
     [Buffer.from("market"), creator.toBuffer(), questionHash],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
 function findVaultPDA(marketPubkey: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("vault"), marketPubkey.toBuffer()],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
 function findPositionPDA(
   marketPubkey: PublicKey,
-  userPubkey: PublicKey
+  userPubkey: PublicKey,
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("position"), marketPubkey.toBuffer(), userPubkey.toBuffer()],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
 function findTreasuryPDA(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("treasury")],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
-function findCreatorFeeVaultPDA(
-  marketPubkey: PublicKey
-): [PublicKey, number] {
+function findCreatorFeeVaultPDA(marketPubkey: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("creator_fee"), marketPubkey.toBuffer()],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
@@ -102,7 +100,7 @@ describe("verdict", () => {
     // Airdrop SOL to user2 for testing
     const sig = await provider.connection.requestAirdrop(
       user2.publicKey,
-      5 * LAMPORTS_PER_SOL
+      5 * LAMPORTS_PER_SOL,
     );
     await provider.connection.confirmTransaction(sig, "confirmed");
 
@@ -118,7 +116,7 @@ describe("verdict", () => {
           fromPubkey: creator.publicKey,
           toPubkey: treasuryPDA,
           lamports: rentExempt,
-        })
+        }),
       );
       await provider.sendAndConfirm(tx);
     }
@@ -130,7 +128,7 @@ describe("verdict", () => {
           fromPubkey: creator.publicKey,
           toPubkey: vaultPDA,
           lamports: rentExempt,
-        })
+        }),
       );
       await provider.sendAndConfirm(tx2);
     }
@@ -149,7 +147,7 @@ describe("verdict", () => {
   async function airdrop(pubkey: PublicKey, sol: number) {
     const sig = await provider.connection.requestAirdrop(
       pubkey,
-      sol * LAMPORTS_PER_SOL
+      sol * LAMPORTS_PER_SOL,
     );
     await provider.connection.confirmTransaction(sig, "confirmed");
   }
@@ -157,7 +155,7 @@ describe("verdict", () => {
   async function mkMarket(
     creatorSigner: Keypair | typeof creator,
     question: string,
-    endTimestamp: number
+    endTimestamp: number,
   ): Promise<MarketPdas> {
     const creatorPk = (creatorSigner as any).publicKey as PublicKey;
     const [market] = findMarketPDA(creatorPk, question);
@@ -183,21 +181,19 @@ describe("verdict", () => {
     m: MarketPdas,
     buyer: Keypair | typeof creator,
     amount: number,
-    isYes: boolean
+    isYes: boolean,
   ) {
     const buyerPk = (buyer as any).publicKey as PublicKey;
     const [userPosition] = findPositionPDA(m.market, buyerPk);
-    const builder = program.methods
-      .buyShares(new BN(amount), isYes, new BN(0))
-      .accounts({
-        market: m.market,
-        userPosition,
-        vault: m.vault,
-        treasury: treasuryPDA,
-        creatorFeeVault: m.creatorFeeVault,
-        user: buyerPk,
-        systemProgram: SystemProgram.programId,
-      });
+    const builder = program.methods.buyShares(new BN(amount), isYes, new BN(0)).accounts({
+      market: m.market,
+      userPosition,
+      vault: m.vault,
+      treasury: treasuryPDA,
+      creatorFeeVault: m.creatorFeeVault,
+      user: buyerPk,
+      systemProgram: SystemProgram.programId,
+    });
     if ((buyer as Keypair).secretKey) {
       builder.signers([buyer as Keypair]);
     }
@@ -207,17 +203,15 @@ describe("verdict", () => {
   async function resolve(
     m: MarketPdas,
     outcome: boolean,
-    adminSigner?: Keypair
+    adminSigner?: Keypair,
   ) {
-    const builder = program.methods
-      .resolveMarket(outcome)
-      .accounts({
-        market: m.market,
-        creatorFeeVault: m.creatorFeeVault,
-        creatorWallet: m.creatorPk,
-        admin: adminSigner ? adminSigner.publicKey : adminKey,
-        systemProgram: SystemProgram.programId,
-      });
+    const builder = program.methods.resolveMarket(outcome).accounts({
+      market: m.market,
+      creatorFeeVault: m.creatorFeeVault,
+      creatorWallet: m.creatorPk,
+      admin: adminSigner ? adminSigner.publicKey : adminKey,
+      systemProgram: SystemProgram.programId,
+    });
     if (adminSigner) builder.signers([adminSigner]);
     await builder.rpc();
   }
@@ -225,15 +219,13 @@ describe("verdict", () => {
   async function claim(m: MarketPdas, claimer: Keypair | typeof creator) {
     const claimerPk = (claimer as any).publicKey as PublicKey;
     const [userPosition] = findPositionPDA(m.market, claimerPk);
-    const builder = program.methods
-      .claimWinnings()
-      .accounts({
-        market: m.market,
-        userPosition,
-        vault: m.vault,
-        user: claimerPk,
-        systemProgram: SystemProgram.programId,
-      });
+    const builder = program.methods.claimWinnings().accounts({
+      market: m.market,
+      userPosition,
+      vault: m.vault,
+      user: claimerPk,
+      systemProgram: SystemProgram.programId,
+    });
     if ((claimer as Keypair).secretKey) {
       builder.signers([claimer as Keypair]);
     }
@@ -270,14 +262,14 @@ describe("verdict", () => {
     expect(marketAccount.outcome).to.equal(null);
     expect(marketAccount.creatorFeeAccumulated.toNumber()).to.equal(0);
     expect(marketAccount.creator.toBase58()).to.equal(
-      creator.publicKey.toBase58()
+      creator.publicKey.toBase58(),
     );
 
     // Vault and creator fee vault are auto-funded to rent-exempt by create_market
     const rentExempt =
       await provider.connection.getMinimumBalanceForRentExemption(0);
     expect(
-      await provider.connection.getBalance(creatorFeeVaultPDA)
+      await provider.connection.getBalance(creatorFeeVaultPDA),
     ).to.be.greaterThanOrEqual(rentExempt);
   });
 
@@ -346,11 +338,11 @@ describe("verdict", () => {
     const noPoolBefore = marketBefore.noPool.toNumber();
     const k = yesPoolBefore * noPoolBefore;
 
-    // Calculate expected shares: 2% fee, then CPMM
+    // Calculate expected shares: 2% fee, then CPMM (ceiling division preserves K)
     const totalFee = Math.floor((500_000 * 200) / 10_000); // 2% = 10000
     const amountAfterFee = 500_000 - totalFee;
     const newYesPool = yesPoolBefore + amountAfterFee;
-    const newNoPool = Math.floor(k / newYesPool);
+    const newNoPool = Math.ceil(k / newYesPool);
     const expectedShares = noPoolBefore - newNoPool;
 
     await program.methods
@@ -391,7 +383,7 @@ describe("verdict", () => {
     const totalFee = Math.floor((300_000 * 200) / 10_000);
     const amountAfterFee = 300_000 - totalFee;
     const newNoPool = noPoolBefore + amountAfterFee;
-    const newYesPool = Math.floor(k / newNoPool);
+    const newYesPool = Math.ceil(k / newNoPool);
     const expectedShares = yesPoolBefore - newYesPool;
 
     await program.methods
@@ -454,7 +446,7 @@ describe("verdict", () => {
     const [shortCreatorFeeVaultPDA] = findCreatorFeeVaultPDA(shortMarketPDA);
     const [shortPositionPDA] = findPositionPDA(
       shortMarketPDA,
-      creator.publicKey
+      creator.publicKey,
     );
 
     await program.methods
@@ -499,7 +491,7 @@ describe("verdict", () => {
     const resolveTimestamp = Math.floor(Date.now() / 1000) + 2;
     const [resolveMarketPDA] = findMarketPDA(
       creator.publicKey,
-      resolveQuestion
+      resolveQuestion,
     );
     const [resolveVaultPDA] = findVaultPDA(resolveMarketPDA);
     const [resolveCreatorFeeVaultPDA] =
@@ -646,7 +638,7 @@ describe("verdict", () => {
             fromPubkey: creator.publicKey,
             toPubkey: claimVaultPDA,
             lamports: rentExempt,
-          })
+          }),
         );
         await provider.sendAndConfirm(fundTx);
       }
@@ -701,15 +693,13 @@ describe("verdict", () => {
     // ============================================================
     it("11. claim_winnings — YES winner claims correctly", async () => {
       const balanceBefore = await provider.connection.getBalance(
-        creator.publicKey
+        creator.publicKey,
       );
-      const vaultBalanceBefore = await provider.connection.getBalance(
-        claimVaultPDA
-      );
+      const vaultBalanceBefore =
+        await provider.connection.getBalance(claimVaultPDA);
 
-      const position = await program.account.userPosition.fetch(
-        claimPositionPDA
-      );
+      const position =
+        await program.account.userPosition.fetch(claimPositionPDA);
       const market = await program.account.market.fetch(claimMarketPDA);
 
       expect(position.yesShares.toNumber()).to.be.greaterThan(0);
@@ -725,13 +715,12 @@ describe("verdict", () => {
         })
         .rpc();
 
-      const positionAfter = await program.account.userPosition.fetch(
-        claimPositionPDA
-      );
+      const positionAfter =
+        await program.account.userPosition.fetch(claimPositionPDA);
       expect(positionAfter.claimed).to.equal(true);
 
       const balanceAfter = await provider.connection.getBalance(
-        creator.publicKey
+        creator.publicKey,
       );
       // Balance should increase (minus tx fees)
       // We just check that payout happened (balance increased relative to vault payout)
@@ -814,20 +803,18 @@ describe("verdict", () => {
           fromPubkey: creator.publicKey,
           toPubkey: feeVaultPDA,
           lamports: feeRentExempt,
-        })
+        }),
       );
       await provider.sendAndConfirm(fundTx);
     }
 
     const amountIn = 1_000_000; // 0.001 SOL = 1,000,000 lamports
-    const treasuryBalanceBefore = await provider.connection.getBalance(
-      treasuryPDA
-    );
-    const vaultBalanceBefore = await provider.connection.getBalance(
-      feeVaultPDA
-    );
+    const treasuryBalanceBefore =
+      await provider.connection.getBalance(treasuryPDA);
+    const vaultBalanceBefore =
+      await provider.connection.getBalance(feeVaultPDA);
     const creatorFeeVaultBalanceBefore = await provider.connection.getBalance(
-      feeCreatorFeeVaultPDA
+      feeCreatorFeeVaultPDA,
     );
 
     await program.methods
@@ -843,12 +830,11 @@ describe("verdict", () => {
       })
       .rpc();
 
-    const treasuryBalanceAfter = await provider.connection.getBalance(
-      treasuryPDA
-    );
+    const treasuryBalanceAfter =
+      await provider.connection.getBalance(treasuryPDA);
     const vaultBalanceAfter = await provider.connection.getBalance(feeVaultPDA);
     const creatorFeeVaultBalanceAfter = await provider.connection.getBalance(
-      feeCreatorFeeVaultPDA
+      feeCreatorFeeVaultPDA,
     );
 
     // Protocol fee = 1% of amount_in = 10,000 lamports → treasury
@@ -860,11 +846,11 @@ describe("verdict", () => {
     const expectedVaultIncrease = amountIn - totalFee;
 
     expect(treasuryBalanceAfter - treasuryBalanceBefore).to.equal(protocolFee);
-    expect(
-      creatorFeeVaultBalanceAfter - creatorFeeVaultBalanceBefore
-    ).to.equal(creatorFee);
+    expect(creatorFeeVaultBalanceAfter - creatorFeeVaultBalanceBefore).to.equal(
+      creatorFee,
+    );
     expect(vaultBalanceAfter - vaultBalanceBefore).to.equal(
-      expectedVaultIncrease
+      expectedVaultIncrease,
     );
 
     // Market tracks accumulated creator fee
@@ -884,7 +870,7 @@ describe("verdict", () => {
     const [adminCreatorFeeVaultPDA] = findCreatorFeeVaultPDA(adminMarketPDA);
     const [adminPositionPDA] = findPositionPDA(
       adminMarketPDA,
-      creator.publicKey
+      creator.publicKey,
     );
 
     // user2 creates the market
@@ -919,7 +905,7 @@ describe("verdict", () => {
     expect(accumulated).to.be.greaterThan(0);
 
     const creatorWalletBalanceBefore = await provider.connection.getBalance(
-      user2.publicKey
+      user2.publicKey,
     );
 
     // Wait for expiry
@@ -944,10 +930,10 @@ describe("verdict", () => {
     expect(marketAfter.creatorFeeAccumulated.toNumber()).to.equal(0);
 
     const creatorWalletBalanceAfter = await provider.connection.getBalance(
-      user2.publicKey
+      user2.publicKey,
     );
     expect(creatorWalletBalanceAfter - creatorWalletBalanceBefore).to.equal(
-      accumulated
+      accumulated,
     );
   });
 
@@ -1042,7 +1028,7 @@ describe("verdict", () => {
 
       const beforeResolve = await program.account.market.fetch(m.market);
       expect(beforeResolve.creatorFeeAccumulated.toNumber()).to.be.greaterThan(
-        0
+        0,
       );
 
       const rentExempt =
@@ -1055,13 +1041,15 @@ describe("verdict", () => {
       const afterResolve = await program.account.market.fetch(m.market);
       expect(afterResolve.creatorFeeAccumulated.toNumber()).to.equal(0);
       expect(await provider.connection.getBalance(m.creatorFeeVault)).to.equal(
-        rentExempt
+        rentExempt,
       );
 
       // Single YES holder claims the entire distributable pot. The vault keeps only
       // its rent-exempt seed (a System account cannot be left below rent-exempt).
       await claim(m, creator);
-      expect(await provider.connection.getBalance(m.vault)).to.equal(rentExempt);
+      expect(await provider.connection.getBalance(m.vault)).to.equal(
+        rentExempt,
+      );
     });
 
     // Test B: YES-heavy vs NO, resolve YES → YES side splits the pot, NO gets 0
@@ -1076,23 +1064,22 @@ describe("verdict", () => {
 
       const rentExempt =
         await provider.connection.getMinimumBalanceForRentExemption(0);
-      const pot =
-        (await provider.connection.getBalance(m.vault)) - rentExempt;
+      const pot = (await provider.connection.getBalance(m.vault)) - rentExempt;
 
       const posCreator = await program.account.userPosition.fetch(
-        findPositionPDA(m.market, creator.publicKey)[0]
+        findPositionPDA(m.market, creator.publicKey)[0],
       );
       const posUser3 = await program.account.userPosition.fetch(
-        findPositionPDA(m.market, user3.publicKey)[0]
+        findPositionPDA(m.market, user3.publicKey)[0],
       );
       const mkt = await program.account.market.fetch(m.market);
       const totalYes = mkt.totalYesShares.toNumber();
 
       const expectedCreator = Math.floor(
-        (pot * posCreator.yesShares.toNumber()) / totalYes
+        (pot * posCreator.yesShares.toNumber()) / totalYes,
       );
       const expectedUser3 = Math.floor(
-        (pot * posUser3.yesShares.toNumber()) / totalYes
+        (pot * posUser3.yesShares.toNumber()) / totalYes,
       );
 
       const cBefore = await provider.connection.getBalance(creator.publicKey);
@@ -1137,8 +1124,7 @@ describe("verdict", () => {
 
       const rentExempt =
         await provider.connection.getMinimumBalanceForRentExemption(0);
-      const pot =
-        (await provider.connection.getBalance(m.vault)) - rentExempt;
+      const pot = (await provider.connection.getBalance(m.vault)) - rentExempt;
       const mkt = await program.account.market.fetch(m.market);
       const totalYes = mkt.totalYesShares.toNumber();
 
@@ -1146,18 +1132,18 @@ describe("verdict", () => {
       let totalPaid = 0;
       for (const h of yesHolders) {
         const pos = await program.account.userPosition.fetch(
-          findPositionPDA(m.market, (h as any).publicKey)[0]
+          findPositionPDA(m.market, (h as any).publicKey)[0],
         );
         const expected = Math.floor(
-          (pot * pos.yesShares.toNumber()) / totalYes
+          (pot * pos.yesShares.toNumber()) / totalYes,
         );
         const balBefore = await provider.connection.getBalance(
-          (h as any).publicKey
+          (h as any).publicKey,
         );
         await claim(m, h);
         if (h !== creator) {
           const balAfter = await provider.connection.getBalance(
-            (h as any).publicKey
+            (h as any).publicKey,
           );
           expect(balAfter - balBefore).to.equal(expected);
         }
@@ -1225,17 +1211,15 @@ describe("verdict", () => {
       expect(mkt.resolved).to.equal(true);
     });
 
-    it("E2. tiny amount — 1 lamport buy does not overflow or divide by zero", async () => {
+    it("E2. tiny amount — 1 lamport buy rejected (zero shares after ceiling division)", async () => {
       const m = await mkMarket(creator, "EDGE tiny amount?", soon(3600));
-      await buy(m, creator, 1, true);
-      const pos = await program.account.userPosition.fetch(
-        findPositionPDA(m.market, creator.publicKey)[0]
-      );
-      // 1 lamport (after 0 fee) still yields a tiny positive share amount
-      expect(pos.yesShares.toNumber()).to.be.greaterThanOrEqual(0);
-      const mkt = await program.account.market.fetch(m.market);
-      expect(mkt.yesPool.toNumber()).to.be.greaterThan(0);
-      expect(mkt.noPool.toNumber()).to.be.greaterThan(0);
+      // With ceiling division, 1 lamport yields 0 shares → ZeroAmount guard rejects
+      try {
+        await buy(m, creator, 1, true);
+        expect.fail("Should have thrown ZeroAmount error");
+      } catch (err: any) {
+        expect(err.toString()).to.contain("ZeroAmount");
+      }
     });
 
     it("E3. large amount — 50 SOL buy keeps AMM math sound", async () => {
@@ -1258,7 +1242,7 @@ describe("verdict", () => {
 
       const treasuryBefore = await provider.connection.getBalance(treasuryPDA);
       const creatorFeeVaultBefore = await provider.connection.getBalance(
-        m.creatorFeeVault
+        m.creatorFeeVault,
       );
       const vaultBefore = await provider.connection.getBalance(m.vault);
 
@@ -1284,18 +1268,16 @@ describe("verdict", () => {
       // Fee accounting: every lamport is split 1% / 1% / 98% with no leakage
       const treasuryAfter = await provider.connection.getBalance(treasuryPDA);
       const creatorFeeVaultAfter = await provider.connection.getBalance(
-        m.creatorFeeVault
+        m.creatorFeeVault,
       );
       const vaultAfter = await provider.connection.getBalance(m.vault);
 
       expect(treasuryAfter - treasuryBefore).to.equal(totalProtocolFee);
       expect(creatorFeeVaultAfter - creatorFeeVaultBefore).to.equal(
-        totalCreatorFee
+        totalCreatorFee,
       );
       expect(vaultAfter - vaultBefore).to.equal(totalTrade);
-      expect(totalProtocolFee + totalCreatorFee + totalTrade).to.equal(
-        totalIn
-      );
+      expect(totalProtocolFee + totalCreatorFee + totalTrade).to.equal(totalIn);
 
       const mkt = await program.account.market.fetch(m.market);
       expect(mkt.creatorFeeAccumulated.toNumber()).to.equal(totalCreatorFee);
