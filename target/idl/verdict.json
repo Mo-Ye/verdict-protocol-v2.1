@@ -253,6 +253,10 @@
         {
           "name": "is_yes",
           "type": "bool"
+        },
+        {
+          "name": "min_shares_out",
+          "type": "u64"
         }
       ]
     },
@@ -521,6 +525,11 @@
       "code": 6012,
       "name": "InsufficientTreasuryBalance",
       "msg": "Insufficient treasury balance for withdrawal"
+    },
+    {
+      "code": 6013,
+      "name": "SlippageExceeded",
+      "msg": "Slippage exceeded: shares out below minimum"
     }
   ],
   "types": [

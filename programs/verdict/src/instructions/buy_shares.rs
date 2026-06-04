@@ -63,7 +63,12 @@ pub struct BuyShares<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn buy_shares_handler(ctx: Context<BuyShares>, amount_in: u64, is_yes: bool) -> Result<()> {
+pub fn buy_shares_handler(
+    ctx: Context<BuyShares>,
+    amount_in: u64,
+    is_yes: bool,
+    min_shares_out: u64,
+) -> Result<()> {
     let market = &ctx.accounts.market;
 
     // Validate market state
@@ -201,6 +206,12 @@ pub fn buy_shares_handler(ctx: Context<BuyShares>, amount_in: u64, is_yes: bool)
     // Guard: reject trades that would yield zero shares (e.g. dust amounts
     // where the AMM rounding consumes the entire input).
     require!(shares_out > 0, VerdictError::ZeroAmount);
+
+    // Slippage protection: revert if the trade yields fewer shares than the caller expects.
+    if min_shares_out > 0 {
+        require!(shares_out >= min_shares_out, VerdictError::SlippageExceeded);
+    }
+
 
     // Update user position
     let position = &mut ctx.accounts.user_position;

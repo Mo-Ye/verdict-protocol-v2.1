@@ -185,7 +185,7 @@ describe("verdict", () => {
   ) {
     const buyerPk = (buyer as any).publicKey as PublicKey;
     const [userPosition] = findPositionPDA(m.market, buyerPk);
-    const builder = program.methods.buyShares(new BN(amount), isYes).accounts({
+    const builder = program.methods.buyShares(new BN(amount), isYes, new BN(0)).accounts({
       market: m.market,
       userPosition,
       vault: m.vault,
@@ -346,7 +346,7 @@ describe("verdict", () => {
     const expectedShares = noPoolBefore - newNoPool;
 
     await program.methods
-      .buyShares(amountIn, true)
+      .buyShares(amountIn, true, new BN(0))
       .accounts({
         market: marketPDA,
         userPosition: positionPDA,
@@ -387,7 +387,7 @@ describe("verdict", () => {
     const expectedShares = yesPoolBefore - newYesPool;
 
     await program.methods
-      .buyShares(amountIn, false)
+      .buyShares(amountIn, false, new BN(0))
       .accounts({
         market: marketPDA,
         userPosition: positionPDA,
@@ -465,7 +465,7 @@ describe("verdict", () => {
 
     try {
       await program.methods
-        .buyShares(new BN(100_000), true)
+        .buyShares(new BN(100_000), true, new BN(0))
         .accounts({
           market: shortMarketPDA,
           userPosition: shortPositionPDA,
@@ -645,7 +645,7 @@ describe("verdict", () => {
 
       // Creator buys YES shares
       await program.methods
-        .buyShares(new BN(1_000_000), true) // 0.001 SOL
+        .buyShares(new BN(1_000_000), true, new BN(0)) // 0.001 SOL
         .accounts({
           market: claimMarketPDA,
           userPosition: claimPositionPDA,
@@ -659,7 +659,7 @@ describe("verdict", () => {
 
       // User2 buys NO shares
       await program.methods
-        .buyShares(new BN(500_000), false) // 0.0005 SOL
+        .buyShares(new BN(500_000), false, new BN(0)) // 0.0005 SOL
         .accounts({
           market: claimMarketPDA,
           userPosition: claimPositionPDA2,
@@ -818,7 +818,7 @@ describe("verdict", () => {
     );
 
     await program.methods
-      .buyShares(new BN(amountIn), true)
+      .buyShares(new BN(amountIn), true, new BN(0))
       .accounts({
         market: feeMarketPDA,
         userPosition: feePositionPDA,
@@ -888,7 +888,7 @@ describe("verdict", () => {
 
     // creator (a different wallet) buys YES — generates a 1% creator fee
     await program.methods
-      .buyShares(new BN(1_000_000), true)
+      .buyShares(new BN(1_000_000), true, new BN(0))
       .accounts({
         market: adminMarketPDA,
         userPosition: adminPositionPDA,

@@ -28,7 +28,7 @@ export default function LanguageSwitcher() {
   }, []);
 
   const switchLocale = (locale: Locale) => {
-    document.cookie = `locale=${locale};path=/;max-age=31536000`;
+    document.cookie = `locale=${locale};path=/;max-age=31536000;SameSite=Strict;Secure`;
     setCurrent(locale);
     setOpen(false);
     window.location.reload();

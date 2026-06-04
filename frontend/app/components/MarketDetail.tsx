@@ -109,7 +109,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
       const [treasuryPDA] = findTreasuryPDA();
 
       await program.methods
-        .buyShares(new BN(amountLamports), isYes)
+        .buyShares(new BN(amountLamports), isYes, new BN(0))
         .accounts({
           market: marketPDA,
           userPosition: positionPDA,

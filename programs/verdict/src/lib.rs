@@ -24,12 +24,15 @@ pub mod verdict {
 
     /// Buys YES or NO shares using SOL via a constant product AMM.
     /// Takes a 2% fee — 1% to protocol treasury, 1% stays as creator fee.
+    /// `min_shares_out` protects against sandwich attacks / slippage; pass 0
+    /// to opt out of the check (not recommended for production).
     pub fn buy_shares(
         ctx: Context<BuyShares>,
         amount_in: u64,
         is_yes: bool,
+        min_shares_out: u64,
     ) -> Result<()> {
-        buy_shares_handler(ctx, amount_in, is_yes)
+        buy_shares_handler(ctx, amount_in, is_yes, min_shares_out)
     }
 
     /// Resolves a market after expiry. Only callable by the market creator

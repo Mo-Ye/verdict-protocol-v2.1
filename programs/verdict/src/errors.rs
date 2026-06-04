@@ -28,4 +28,6 @@ pub enum VerdictError {
     Overflow,
     #[msg("Insufficient treasury balance for withdrawal")]
     InsufficientTreasuryBalance,
+    #[msg("Slippage exceeded: shares out below minimum")]
+    SlippageExceeded,
 }

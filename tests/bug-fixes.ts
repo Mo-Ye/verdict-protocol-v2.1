@@ -126,7 +126,7 @@ describe("bug-fixes", () => {
   ) {
     const buyerPk = (buyer as any).publicKey as PublicKey;
     const [userPosition] = findPositionPDA(m.market, buyerPk);
-    const builder = program.methods.buyShares(new BN(amount), isYes).accounts({
+    const builder = program.methods.buyShares(new BN(amount), isYes, new BN(0)).accounts({
       market: m.market,
       userPosition,
       vault: m.vault,
