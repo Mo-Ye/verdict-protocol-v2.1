@@ -5,10 +5,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-verdict = "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L"
+verdict = "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
 
 [programs.devnet]
-verdict = "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L"
+verdict = "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
 
 [registry]
 url = "https://api.apr.dev"

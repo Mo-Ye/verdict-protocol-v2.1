@@ -3,9 +3,6 @@ use anchor_lang::system_program;
 use crate::state::Market;
 use crate::errors::VerdictError;
 
-/// Initial pool size in lamports (0.01 SOL per side).
-/// For production with real money, increase to at least 100 SOL (100_000_000_000)
-/// to prevent price manipulation on small trades.
 const INITIAL_POOL_SIZE: u64 = 10_000_000;
 
 #[derive(Accounts)]
@@ -30,7 +27,6 @@ pub struct CreateMarket<'info> {
         bump
     )]
     pub vault: SystemAccount<'info>,
-    /// The creator fee vault PDA — holds the 1% creator fee separately from trade liquidity.
     /// CHECK: This is a PDA used as a SOL vault, validated by seeds
     #[account(
         mut,
@@ -52,6 +48,11 @@ pub fn create_market_handler(
     require!(question.len() <= 200, VerdictError::QuestionTooLong);
     let clock = Clock::get()?;
     require!(end_timestamp > clock.unix_timestamp, VerdictError::InvalidTimestamp);
+
+    let initial_liquidity = INITIAL_POOL_SIZE
+        .checked_mul(2)
+        .ok_or(VerdictError::Overflow)?;
+
     let market = &mut ctx.accounts.market;
     market.question = question;
     market.end_timestamp = end_timestamp;
@@ -64,13 +65,19 @@ pub fn create_market_handler(
     market.creator = ctx.accounts.creator.key();
     market.creator_fee_accumulated = 0;
     market.winning_pot = 0;
+    market.initial_pool_size = initial_liquidity;
     market.vault_bump = ctx.bumps.vault;
     market.creator_fee_vault_bump = ctx.bumps.creator_fee_vault;
     market.bump = ctx.bumps.market;
 
-    // Auto-fund the vault and creator fee vault with the rent-exempt minimum so the
-    // first buy_shares / fee transfer never fails on a non-rent-exempt destination.
     let rent_exempt = Rent::get()?.minimum_balance(0);
+
+    // Fund vault with rent-exempt minimum PLUS initial pool liquidity.
+    // This SOL backs the virtual AMM pools and is refunded to the creator on resolution.
+    let vault_fund = rent_exempt
+        .checked_add(initial_liquidity)
+        .ok_or(VerdictError::Overflow)?;
+
     system_program::transfer(
         CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
@@ -79,8 +86,9 @@ pub fn create_market_handler(
                 to: ctx.accounts.vault.to_account_info(),
             },
         ),
-        rent_exempt,
+        vault_fund,
     )?;
+
     system_program::transfer(
         CpiContext::new(
             ctx.accounts.system_program.to_account_info(),

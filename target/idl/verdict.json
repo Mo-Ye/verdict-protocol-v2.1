@@ -1,5 +1,5 @@
 {
-  "address": "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L",
+  "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ",
   "metadata": {
     "name": "verdict",
     "version": "0.1.0",
@@ -104,7 +104,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -242,7 +242,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -311,7 +311,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -371,7 +371,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": []
@@ -417,7 +417,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [

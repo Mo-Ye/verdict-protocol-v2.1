@@ -1,10 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
 
-export const PROGRAM_ID = new PublicKey('Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L');
+export const PROGRAM_ID = new PublicKey('C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ');
 
 // Hardcoded protocol admin — matches PROTOCOL_ADMIN in the Anchor program.
 // Can resolve any market and withdraw protocol fees from the treasury.
-export const PROTOCOL_ADMIN = new PublicKey('EBBkuBxBRsctjb8RdPSPMCfZvn217bqPkg45VDUdic6T');
+export const PROTOCOL_ADMIN = new PublicKey('HxqWfGfbbQ4LCgZicrTdbzGMqffAARNfb4S1Rxvchxto');
 
 export const LAMPORTS_PER_SOL = 1_000_000_000;
 

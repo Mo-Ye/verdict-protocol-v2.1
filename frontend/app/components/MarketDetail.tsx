@@ -136,11 +136,13 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
     setLoading(true);
     setStatusMsg(t('trade.resolving'));
     try {
+      const [vaultPDA] = findVaultPDA(marketPDA);
       const [creatorFeeVaultPDA] = findCreatorFeeVaultPDA(marketPDA);
       await program.methods
         .resolveMarket(outcome)
         .accounts({
           market: marketPDA,
+          vault: vaultPDA,
           creatorFeeVault: creatorFeeVaultPDA,
           creatorWallet: m.creator,
           admin: publicKey,
@@ -172,8 +174,8 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
       const rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(0);
       // The vault retains its rent-exempt seed; only the liquidity above it is distributed.
       const pot = Math.max(vaultBalance - rentExempt, 0);
-      const totalShares = m.outcome ? m.totalYesShares.toNumber() : m.totalNoShares.toNumber();
-      const userShares = m.outcome ? yesShares : noShares;
+      const totalShares = marketData.outcome ? marketData.totalYesShares.toNumber() : marketData.totalNoShares.toNumber();
+      const userShares = marketData.outcome ? yesShares : noShares;
       const payout = totalShares > 0 ? Math.floor((pot * userShares) / totalShares) : 0;
 
       await program.methods
@@ -227,13 +229,13 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
           {statusMsg}
         </div>
       )}
-      {(claimAmount !== null || position?.claimed) && ((m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)) && (
+      {(claimAmount !== null || position?.claimed) && ((marketData.outcome && yesShares > 0) || (!marketData.outcome && noShares > 0)) && (
         <div className="mb-4 px-4 py-3 rounded-lg text-sm font-semibold bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
           🎉 You won this market!
         </div>
       )}
 
-      {status === 'resolved' && hasPosition && !((m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)) && (
+      {status === 'resolved' && hasPosition && !((marketData.outcome && yesShares > 0) || (!marketData.outcome && noShares > 0)) && (
         <div className="mb-4 px-4 py-3 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/30 text-red-400">
           ❌ You lost this market.
         </div>
@@ -268,9 +270,9 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
 
             {status === 'resolved' && (
               <div className={`p-4 rounded-xl text-center font-semibold ${
-                m.outcome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                marketData.outcome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
               }`}>
-                {t('markets.outcome')}: {m.outcome ? t('markets.yesWon') : t('markets.noWon')}
+                {t('markets.outcome')}: {marketData.outcome ? t('markets.yesWon') : t('markets.noWon')}
               </div>
             )}
             <div className="mt-4 text-xs text-gray-500 space-y-1">
@@ -308,19 +310,19 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
             </h2>
             {status === 'resolved' && (
               <div className={`mb-4 p-3 rounded-lg text-sm font-semibold ${
-                (m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)
+                (marketData.outcome && yesShares > 0) || (!marketData.outcome && noShares > 0)
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'bg-red-500/20 text-red-400'
               }`}>
-                {(m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)
+                {(marketData.outcome && yesShares > 0) || (!marketData.outcome && noShares > 0)
                   ? t('trade.winningPosition', { amount: (
                       vaultBal * 
-                      (m.outcome ? yesShares : noShares) / 
-                      (m.outcome ? m.totalYesShares.toNumber() : m.totalNoShares.toNumber()) / 
+                      (marketData.outcome ? yesShares : noShares) / 
+                      (marketData.outcome ? marketData.totalYesShares.toNumber() : marketData.totalNoShares.toNumber()) / 
                       LAMPORTS_PER_SOL
                     ).toFixed(4) })
                   : t('trade.losingPosition', { amount: (
-                      (m.outcome ? noShares : yesShares) / LAMPORTS_PER_SOL
+                      (marketData.outcome ? noShares : yesShares) / LAMPORTS_PER_SOL
                     ).toFixed(4) })
                 }
               </div>
@@ -329,7 +331,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
                 {yesShares > 0 && (
                   <div className={`border rounded-lg p-3 ${
                     status === 'resolved'
-                      ? m.outcome
+                      ? marketData.outcome
                         ? 'bg-emerald-500/10 border-emerald-500/30'
                         : 'bg-gray-500/5 border-gray-500/10 opacity-60'
                       : 'bg-emerald-500/5 border-emerald-500/10'
@@ -338,9 +340,9 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
                       <div className="text-xs text-emerald-400/60">{t('markets.yesPrice')} {t('trade.shares')}</div>
                       {status === 'resolved' && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                          m.outcome ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
+                          marketData.outcome ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
                         }`}>
-                          {m.outcome ? '✓ Won' : '✗ Lost'}
+                          {marketData.outcome ? '✓ Won' : '✗ Lost'}
                         </span>
                       )}
                     </div>
@@ -353,7 +355,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
                 {noShares > 0 && (
                   <div className={`border rounded-lg p-3 ${
                     status === 'resolved'
-                      ? !m.outcome
+                      ? !marketData.outcome
                         ? 'bg-emerald-500/10 border-emerald-500/30'
                         : 'bg-gray-500/5 border-gray-500/10 opacity-60'
                       : 'bg-red-500/5 border-red-500/10'
@@ -362,9 +364,9 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
                       <div className="text-xs text-red-400/60">{t('markets.noPrice')} {t('trade.shares')}</div>
                       {status === 'resolved' && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                          !m.outcome ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
+                          !marketData.outcome ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
                         }`}>
-                          {!m.outcome ? '✓ Won' : '✗ Lost'}
+                          {!marketData.outcome ? '✓ Won' : '✗ Lost'}
                         </span>
                       )}
                     </div>
@@ -482,7 +484,7 @@ export default function MarketDetail({ market, program, onBack, onRefresh }: Mar
           )}
 
           {status === 'resolved' && publicKey && !position?.claimed && 
-            ((m.outcome && yesShares > 0) || (!m.outcome && noShares > 0)) && (            <div className="bg-[#141524] border border-white/5 rounded-xl p-5">
+            ((marketData.outcome && yesShares > 0) || (!marketData.outcome && noShares > 0)) && (            <div className="bg-[#141524] border border-white/5 rounded-xl p-5">
               <button
                 onClick={claimWinnings}
                 disabled={loading}

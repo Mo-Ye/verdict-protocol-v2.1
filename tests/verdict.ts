@@ -15,7 +15,7 @@ import BN from "bn.js";
 const idl = require("../target/idl/verdict.json");
 
 const PROGRAM_ID = new PublicKey(
-  "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L",
+  "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ",
 );
 
 function getQuestionHash(question: string): Buffer {

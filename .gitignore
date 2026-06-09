@@ -8,3 +8,5 @@ target/*
 !target/idl/
 !target/deploy/
 target/deploy/*-keypair.json
+frontend/.next/
+frontend/node_modules/

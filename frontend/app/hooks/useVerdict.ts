@@ -5,7 +5,7 @@ import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { useMemo } from 'react';
 import idl from '../idl/verdict.json';
 
-const PROGRAM_ID = new PublicKey('Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L');
+const PROGRAM_ID = new PublicKey('C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ');
 
 export function useVerdict() {
   const { connection } = useConnection();

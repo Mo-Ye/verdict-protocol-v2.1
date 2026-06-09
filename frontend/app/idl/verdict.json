@@ -1,5 +1,5 @@
 {
-  "address": "Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L",
+  "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ",
   "metadata": {
     "name": "verdict",
     "version": "0.1.0",
@@ -104,7 +104,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -242,7 +242,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -273,6 +273,24 @@
           "name": "market",
           "writable": true
         },
+
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [118, 97, 117, 108, 116]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          } 
+        },
+
         {
           "name": "creator_fee_vault",
           "writable": true,
@@ -311,7 +329,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -371,7 +389,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": []
@@ -417,7 +435,7 @@
         },
         {
           "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "address": "C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ"
         }
       ],
       "args": [
@@ -575,6 +593,12 @@
             "name": "winning_pot",
             "type": "u64"
           },
+
+          {
+            "name": "initial_pool_size",
+            "type": "u64"
+          },  
+
           {
             "name": "vault_bump",
             "type": "u8"

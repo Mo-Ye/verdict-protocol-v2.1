@@ -1,11 +1,10 @@
-use crate::errors::VerdictError;
-use crate::instructions::resolve_market::PROTOCOL_ADMIN;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
+use crate::errors::VerdictError;
+use crate::instructions::resolve_market::PROTOCOL_ADMIN;
 
 #[derive(Accounts)]
 pub struct WithdrawProtocolFees<'info> {
-    /// The treasury PDA that holds accumulated protocol fees
     /// CHECK: This is a PDA used as a SOL treasury, validated by seeds
     #[account(
         mut,
@@ -13,11 +12,8 @@ pub struct WithdrawProtocolFees<'info> {
         bump
     )]
     pub treasury: SystemAccount<'info>,
-
-    /// The protocol admin — must match the hardcoded PROTOCOL_ADMIN.
     #[account(mut)]
     pub admin: Signer<'info>,
-
     pub system_program: Program<'info, System>,
 }
 
@@ -25,18 +21,17 @@ pub fn withdraw_protocol_fees_handler(
     ctx: Context<WithdrawProtocolFees>,
     amount: u64,
 ) -> Result<()> {
-    // Only the protocol admin may withdraw treasury funds.
     require!(
         ctx.accounts.admin.key() == PROTOCOL_ADMIN,
         VerdictError::Unauthorized
     );
     require!(amount > 0, VerdictError::ZeroAmount);
 
-    // Cannot withdraw so much that the treasury drops below rent-exempt minimum.
-    // Without this guard the admin could drain all lamports, making the PDA
-    // non-rent-exempt and causing future fee deposits to fail.
     let treasury_balance = ctx.accounts.treasury.lamports();
     let rent_exempt = Rent::get()?.minimum_balance(0);
+
+    // Never withdraw below rent-exempt minimum — draining treasury to 0
+    // destroys the PDA and breaks all future protocol fee transfers.
     let withdrawable = treasury_balance.saturating_sub(rent_exempt);
     require!(
         amount <= withdrawable,
@@ -59,6 +54,5 @@ pub fn withdraw_protocol_fees_handler(
     )?;
 
     msg!("Protocol fees withdrawn: {} lamports", amount);
-
     Ok(())
 }
