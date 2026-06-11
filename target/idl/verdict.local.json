@@ -311,7 +311,8 @@
         },
         {
           "name": "admin",
-          "signer": true
+          "signer": true,
+          "writable": true
         },
         {
           "name": "system_program",

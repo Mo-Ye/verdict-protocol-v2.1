@@ -274,10 +274,6 @@
           "writable": true
         },
         {
-          "name": "vault",
-          "writable": true
-        },
-        {
           "name": "creator_fee_vault",
           "writable": true,
           "pda": {
@@ -577,10 +573,6 @@
           },
           {
             "name": "winning_pot",
-            "type": "u64"
-          },
-          {
-            "name": "initial_pool_size",
             "type": "u64"
           },
           {

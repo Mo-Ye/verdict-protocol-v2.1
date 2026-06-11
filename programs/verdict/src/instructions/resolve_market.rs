@@ -57,9 +57,6 @@ pub fn resolve_market_handler(
     let vault_bump = market.vault_bump;
     let creator_fee_vault_bump = market.creator_fee_vault_bump;
 
-    // Refund initial pool liquidity to creator.
-    // Creator funded the AMM pools at creation but is not a liquidity provider —
-    // traders' SOL is the actual prize pool, creator deposit is returned in full.
     let initial_pool_size = market.initial_pool_size;
     if initial_pool_size > 0 {
         let vault_seeds: &[&[u8]] = &[
@@ -80,7 +77,6 @@ pub fn resolve_market_handler(
         )?;
     }
 
-    // Pay out accumulated creator fee from creator_fee_vault.
     let creator_fee = market.creator_fee_accumulated;
     if creator_fee > 0 {
         let creator_fee_seeds: &[&[u8]] = &[
