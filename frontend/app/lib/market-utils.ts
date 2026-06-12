@@ -35,8 +35,8 @@ export interface UserPositionAccount {
 export function calculatePrices(yesPool: number, noPool: number) {
   const total = yesPool + noPool;
   if (total === 0) return { yesPrice: 50, noPrice: 50 };
-  const yesPrice = (noPool / total) * 100;
-  const noPrice = (yesPool / total) * 100;
+  const yesPrice = (yesPool / total) * 100;
+  const noPrice = (noPool / total) * 100;
   return {
     yesPrice: Math.round(yesPrice * 10) / 10,
     noPrice: Math.round(noPrice * 10) / 10,
