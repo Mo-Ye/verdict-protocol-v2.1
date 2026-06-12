@@ -2,7 +2,7 @@
 
 **Collective forecasting markets powered by Solana.**
 
-Verdict is an open prediction market protocol — not a betting app, not a Polymarket clone. It is infrastructure for real-time collective intelligence, built natively on Solana.
+Verdict is building a forecasting network — not a betting app, not a Polymarket clone. It is infrastructure for real-time collective intelligence, built natively on Solana.
 
 Three directions define where Verdict is going:
 

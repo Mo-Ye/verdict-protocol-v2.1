@@ -136,10 +136,13 @@ This creates a viral growth loop — fee share holders become natural promoters 
 ### Phase 5 — Real-World Oracle Integration
 Non-price markets (politics, sports, culture) currently require manual resolution. Future integration with optimistic oracle protocols will enable automatic resolution for real-world events:
 - **UMA Protocol** — optimistic oracle with 48h challenge period
-- **Kleros** — decentralized arbitration for disputed outcomes
+- **Kleros** — decentralized arbitration for disputed outcomes (see phase 7)
 
 ### Phase 6 — Hybrid Liquidity
 Exploration of OpenBook CLOB integration for high-volume markets alongside the existing AMM. AMM remains the default for new and low-volume markets; CLOB becomes available when market maker liquidity justifies it.
+
+### Phase 7 — Verdict Arbitration Layer Kleros-inspired 
+Decentralized dispute resolution built natively on Solana. Random juror selection, stake-based accountability, appeals system. Natural evolution for subjective market resolution as the protocol matures.
 
 ---
 
