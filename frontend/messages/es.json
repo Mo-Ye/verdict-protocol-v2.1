@@ -24,8 +24,8 @@
     "create": "Crear Mercado"
   },
   "markets": {
-    "title": "Mercados de Predicción",
-    "subtitle": "Opera sobre el resultado de eventos reales",
+    "title": "Inteligencia de Mercado en Solana",
+    "subtitle": "Mercados de predicción colectiva — opera sobre el futuro.",
     "active": "Activos",
     "resolved": "Resueltos",
     "expired": "Expirados",

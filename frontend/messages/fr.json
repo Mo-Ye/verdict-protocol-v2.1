@@ -24,8 +24,8 @@
     "create": "Créer un Marché"
   },
   "markets": {
-    "title": "Marchés de Prédiction",
-    "subtitle": "Tradez sur le résultat d'événements réels",
+    "title": "Intelligence de Marché sur Solana",
+    "subtitle": "Marchés de prévision collectifs — misez sur ce qui vient.",
     "active": "Actifs",
     "resolved": "Résolus",
     "expired": "Expirés",

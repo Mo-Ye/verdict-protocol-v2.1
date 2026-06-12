@@ -24,8 +24,8 @@
     "create": "Create Market"
   },
   "markets": {
-    "title": "Prediction Markets",
-    "subtitle": "Trade on the outcome of real-world events",
+    "title": "Market Intelligence on Solana",
+    "subtitle": "Collective forecasting markets — trade on what happens next.",
     "active": "Active",
     "resolved": "Resolved",
     "expired": "Expired",

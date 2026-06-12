@@ -24,8 +24,8 @@
     "create": "Kreiraj tržište"
   },
   "markets": {
-    "title": "Tržišta predikcija",
-    "subtitle": "Trguj na ishod stvarnih događaja",
+    "title": "Tržišna inteligencija na Solani",
+    "subtitle": "Kolektivna tržišta predviđanja — trgujte onim što dolazi.",
     "active": "Aktivna",
     "resolved": "Rešena",
     "expired": "Istekla",
