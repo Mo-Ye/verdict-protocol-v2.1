@@ -1,108 +1,143 @@
 # Verdict Protocol
 
-A simplified prediction market protocol built on Solana using the Anchor framework.
+**Collective forecasting markets powered by Solana.**
 
-Users can create binary (YES/NO) prediction markets, buy shares using SOL through a constant product AMM, and claim winnings after resolution.
+Verdict is an open prediction market protocol — not a betting app, not a Polymarket clone. It is infrastructure for real-time collective intelligence, built natively on Solana.
 
-## Architecture
+Three directions define where Verdict is going:
 
-```
-┌─────────────────────────────────────────────────┐
-│                  Verdict Program                 │
-├─────────────┬─────────────┬─────────┬───────────┤
-│create_market│ buy_shares  │ resolve │  claim    │
-│             │  (AMM)      │ _market │ _winnings │
-├─────────────┴─────────────┴─────────┴───────────┤
-│                                                  │
-│  Market PDA        UserPosition PDA              │
-│  ┌──────────────┐  ┌──────────────┐              │
-│  │ question     │  │ user         │              │
-│  │ yes_pool     │  │ yes_shares   │              │
-│  │ no_pool      │  │ no_shares    │              │
-│  │ resolved     │  │ claimed      │              │
-│  │ outcome      │  └──────────────┘              │
-│  │ creator      │                                │
-│  └──────────────┘                                │
-│                                                  │
-│  Vault PDA (SOL)     Treasury PDA (fees)         │
-└─────────────────────────────────────────────────┘
-```
+**1. Market Intelligence** — A place where the internet forecasts reality. High-signal markets across crypto, AI, macro, and culture. Probabilities as live information, not just odds.
 
-### PDAs (Program Derived Addresses)
+**2. Creator Economy** — Anyone can launch a market and earn 1% of all trading volume. Creators are forecasters. The protocol rewards signal, not spam.
 
-| PDA | Seeds | Purpose |
-|-----|-------|---------|
-| Market | `["market", creator, sha256(question)]` | Stores market state and AMM pools |
-| UserPosition | `["position", market, user]` | Tracks each user's share holdings |
-| Vault | `["vault", market]` | Holds SOL deposits for the market |
-| Treasury | `["treasury"]` | Collects protocol fees (1%) |
+**3. Composability** — Open REST API, deterministic PDA derivation, future SDK and WebSocket feeds. Verdict is infrastructure other builders can integrate, not a closed platform.
 
-### Constant Product AMM
+---
 
-The protocol uses a constant product formula (`K = yes_pool * no_pool`) for pricing:
+**Program ID:** `C8s7AU4HCN6NNSU9XLWTaJECAqseX41AjTDyRpuJ9TFZ`
+**Network:** Solana Devnet
+**Status:** Live on devnet — 32/32 tests passing
 
-- Initial pools: `yes_pool = 1000, no_pool = 1000` (50/50 odds)
-- When buying YES: `new_yes_pool = yes_pool + amount`, `new_no_pool = K / new_yes_pool`
-- Shares out = `old_no_pool - new_no_pool`
-- 2% fee: 1% to protocol treasury, 1% stays in vault as creator fee
+---
+
+## Protocol Overview
+
+### Instructions
+
+| Instruction | Description |
+|-------------|-------------|
+| `create_market(question, end_timestamp)` | Creates a binary forecasting market. Creator deposits initial AMM liquidity, refunded on resolution. |
+| `buy_shares(amount_in, is_yes)` | Buys YES or NO shares via constant-product AMM. 2% fee split between protocol and creator. |
+| `resolve_market(outcome)` | Resolves market after expiry. Callable by market creator or `PROTOCOL_ADMIN`. Refunds creator deposit and pays out accumulated creator fees. |
+| `claim_winnings()` | Claims proportional payout from the prize pool for winning share holders. |
+| `withdraw_protocol_fees(amount)` | Withdraws accumulated protocol fees from treasury. Only callable by `PROTOCOL_ADMIN`. |
 
 ### Fee Structure
 
 | Fee | Rate | Destination |
 |-----|------|-------------|
-| Protocol fee | 1% | Treasury PDA |
-| Creator fee | 1% | Vault (stays in market pool) |
-| **Total** | **2%** | |
+| Protocol fee | 1% of trade | Treasury PDA |
+| Creator fee | 1% of trade | Creator fee vault (paid out on resolution) |
 
-## Instructions
+### Constant Product AMM
 
-### `create_market(question: String, end_timestamp: i64)`
-Creates a new prediction market with a binary question and expiry time.
+Verdict uses a constant-product formula (`K = yes_pool × no_pool`) for share pricing:
 
-### `buy_shares(amount_in: u64, is_yes: bool)`
-Buys YES or NO shares using SOL via the constant product AMM.
+- Initial pools: `yes_pool = 10,000,000`, `no_pool = 10,000,000` (50/50 odds)
+- Buying YES adds SOL to `yes_pool`, reducing `no_pool` — YES price increases
+- Shares out = difference in the opposing pool after the trade
+- Price naturally shifts with each trade, reflecting collective sentiment
 
-### `resolve_market(outcome: bool, admin_key: Pubkey)`
-Resolves a market after expiry. Only callable by admin.
+### PDAs
 
-### `claim_winnings()`
-Claims proportional winnings from the vault after market resolution.
+| PDA | Seeds | Purpose |
+|-----|-------|---------|
+| Market | `["market", creator, sha256(question)]` | Market state and AMM pools |
+| Vault | `["vault", market]` | SOL prize pool |
+| Creator Fee Vault | `["creator_fee", market]` | Accumulated creator fees |
+| Treasury | `["treasury"]` | Protocol fee accumulation |
+| UserPosition | `["position", market, user]` | Per-user share holdings |
 
-## Setup
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Verdict Program                         │
+├──────────────┬─────────────┬──────────────┬─────────────────┤
+│ create_market│  buy_shares │resolve_market│  claim_winnings │
+│              │    (AMM)    │              │                 │
+├──────────────┴─────────────┴──────────────┴─────────────────┤
+│                                                              │
+│  Market PDA           UserPosition PDA                       │
+│  ┌────────────────┐   ┌──────────────┐                       │
+│  │ question       │   │ yes_shares   │                       │
+│  │ yes_pool       │   │ no_shares    │                       │
+│  │ no_pool        │   │ claimed      │                       │
+│  │ resolved       │   └──────────────┘                       │
+│  │ outcome        │                                          │
+│  │ creator        │   Vault PDA        Creator Fee Vault     │
+│  │ initial_pool   │   (prize pool)     (1% per trade)        │
+│  │ winning_pot    │                                          │
+│  └────────────────┘   Treasury PDA                          │
+│                        (protocol fees)                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## REST API
+
+Read-only HTTP endpoints for querying on-chain market data.
+Full documentation: [`docs/API.md`](docs/API.md)
+
+```
+GET /api/markets
+GET /api/markets/:id
+GET /api/creator/:wallet
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/) (1.79+)
-- [Solana CLI](https://docs.solanalabs.com/cli/install) (v2.1+)
-- [Anchor](https://www.anchor-lang.com/docs/installation) (v0.30.1)
-- [Node.js](https://nodejs.org/) (v18+)
+- Rust + Cargo (`rustup`)
+- Solana CLI
+- Node.js 18+
+- `npm install`
 
-### Install Dependencies
+### Local Testing
 
-```bash
-yarn install
-```
+See [`docs/TESTING.md`](docs/TESTING.md) for the complete local testing guide.
 
-### Build
+Quick start:
 
 ```bash
-cargo build-sbf --manifest-path=programs/verdict/Cargo.toml
+# Build with local-admin feature
+cargo build-sbf -- --features local-admin
+
+# Start local validator (separate terminal)
+solana-test-validator --reset
+
+# Airdrop SOL
+solana airdrop 10 HESGaak1WvAXvepem8GQAjhrKDXtkfT6Eb8zZeLg9JTU --url localhost
+solana airdrop 60 $(solana-keygen pubkey tests/fixtures/admin.json) --url localhost
+
+# Deploy
+solana program deploy target/deploy/verdict.so --keypair ~/deploy-devnet.json --url localhost
+
+# Run tests
+ANCHOR_PROVIDER_URL=http://localhost:8899 \
+ANCHOR_WALLET=tests/fixtures/admin.json \
+./node_modules/.bin/ts-mocha --timeout 120000 tests/verdict.ts tests/invariants.ts
 ```
 
-### Test
+---
 
-```bash
-# Start local validator with the program
-solana-test-validator --reset --bpf-program 6VmLghUCKtnihagf4gJ9dv5F7tnrEvuXPS5hpikiy9U8 target/deploy/verdict.so
-
-# In another terminal
-export ANCHOR_PROVIDER_URL=http://localhost:8899
-export ANCHOR_WALLET=~/.config/solana/id.json
-solana airdrop 10
-yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts
-```
-
-All 14 tests should pass:
+## Test Suite — 32/32 Passing
 
 ```
   verdict
@@ -111,7 +146,7 @@ All 14 tests should pass:
     ✔ 3. create_market — fails with past timestamp
     ✔ 4. buy_shares YES — correct shares calculated
     ✔ 5. buy_shares NO — correct shares calculated
-    ✔ 6. buy_shares — price shifts after purchase
+    ✔ 6. buy_shares — price shifts after purchase (YES more expensive)
     ✔ 7. buy_shares — fails on expired market
     ✔ 8. resolve_market — success by admin
     ✔ 9. resolve_market — fails if called before expiry
@@ -120,41 +155,94 @@ All 14 tests should pass:
     ✔ 12. claim_winnings — NO loser cannot claim
     ✔ 13. claim_winnings — cannot claim twice
     ✔ 14. fee — 2% fee collected correctly
+    ✔ 15. withdraw_protocol_fees — admin withdraws from treasury
+    ✔ 16. withdraw_protocol_fees — non-admin cannot withdraw
+    ✔ 17. withdraw_protocol_fees — amount over balance fails
+    ✔ 18. withdraw_protocol_fees — zero amount fails
+    ✔ 19. resolve_market — admin resolves market created by user2
+    ✔ A.  only YES buyers — vault drains to 0, creator fee paid
+    ✔ B.  YES-heavy vs NO — winners split pot, losers get nothing
+    ✔ C.  multiple users & purchases — proportional, conserved
+    ✔ D.  all winners claim — vault reaches ~0
+    ✔ E1. boundary timestamp — buy before expiry ok, after fails, resolve ok
+    ✔ E2. tiny amount — 1 lamport buy rejected (zero shares after ceiling division)
+    ✔ E3. large amount — 50 SOL buy keeps AMM math sound
+    ✔ F.  randomized stress — conservation of funds across many trades
 
-  14 passing
+  invariants
+    ✔ INV-1. buy_shares — fails on resolved market
+    ✔ INV-2. claim_winnings — fails before market is resolved
+    ✔ INV-3. resolve_market — fails if already resolved
+    ✔ INV-4. resolve_market — creator receives exact initial_pool_size refund
+    ✔ INV-5. vault isolation — claim on market A does not affect market B vault
+
+  32 passing
 ```
+
+---
 
 ## Error Codes
 
 | Code | Name | Description |
 |------|------|-------------|
-| 6000 | EmptyQuestion | Question cannot be empty |
-| 6001 | QuestionTooLong | Question exceeds 200 characters |
-| 6002 | InvalidTimestamp | End timestamp must be in the future |
-| 6003 | MarketExpired | Market has expired |
-| 6004 | MarketNotExpiredYet | Market has not expired yet |
-| 6005 | MarketAlreadyResolved | Market already resolved |
-| 6006 | MarketNotResolved | Market not yet resolved |
-| 6007 | InsufficientShares | No winning shares to claim |
-| 6008 | AlreadyClaimed | Winnings already claimed |
-| 6009 | Unauthorized | Only admin can resolve |
-| 6010 | ZeroAmount | Amount must be > 0 |
-| 6011 | Overflow | Arithmetic overflow |
+| 6000 | `EmptyQuestion` | Question cannot be empty |
+| 6001 | `QuestionTooLong` | Question exceeds 200 characters |
+| 6002 | `InvalidTimestamp` | End timestamp must be in the future |
+| 6003 | `MarketExpired` | Market has expired, trading closed |
+| 6004 | `MarketNotExpiredYet` | Market has not expired yet |
+| 6005 | `MarketAlreadyResolved` | Market already resolved |
+| 6006 | `MarketNotResolved` | Market not yet resolved |
+| 6007 | `InsufficientShares` | No winning shares to claim |
+| 6008 | `AlreadyClaimed` | Winnings already claimed |
+| 6009 | `Unauthorized` | Only creator or PROTOCOL_ADMIN can resolve |
+| 6010 | `ZeroAmount` | Amount must be greater than zero |
+| 6011 | `Overflow` | Arithmetic overflow |
+| 6012 | `InsufficientTreasuryBalance` | Treasury balance too low to withdraw |
 
-## Program ID
+---
 
-```
-6VmLghUCKtnihagf4gJ9dv5F7tnrEvuXPS5hpikiy9U8
-```
-current: Aid5RQWA6UXXTKqSpStHA9CuncyU2ipSjhYAvfsLhk4L
+## Roadmap
 
-## Known Bugs
+Full roadmap with milestones, timelines, and grant details: [`ROADMAP.md`](ROADMAP.md)
 
-### 1. Creator Fee Not Distributed
-Creator fee (1%) accumulates in the vault and is paid out to winners instead of the market creator. The `buy_shares` instruction keeps creator fee in vault with no `withdraw_creator_fee` instruction for creator to claim it.
+### Phase 1 — Foundation ✅
+- Constant-product AMM pricing
+- Creator fee incentives (1% per trade)
+- Protocol fee treasury
+- Admin + creator resolution
+- Initial liquidity refund on resolution
+- REST API
+- 32/32 test coverage
 
-### 2. Resolve Market Authorization
-The `resolve_market` instruction accepts `admin_key` as an input parameter and only checks `admin.key() == admin_key`, without verifying the signer is the market creator. Any user can resolve any market by passing their own pubkey as both the signer and `admin_key` parameter.
+### Phase 2 — Pyth Oracle + AI *(8 weeks)*
+- Automatic market resolution via Pyth price feeds
+- AI market classification (Pyth-solvable vs manual)
+- AI resolution criteria generator
+- AI duplicate detection
+- 45+ tests
+
+### Phase 3 — Mainnet + SDK *(8 weeks)*
+- Security review + mainnet deployment
+- TypeScript SDK
+- WebSocket price feeds
+- Full API documentation
+
+### Phase 4 — Creator Economy *(14 weeks)*
+- Creator profiles and leaderboards
+- Creator reputation system
+- **Creator Fee Marketplace** — fractionalized fee stream, community co-ownership of market upside
+- 1,000 Monthly Active Traders target
+
+### Phase 5 — Composability
+- On-chain CPI integrations
+- External frontend support
+- Analytics tooling
+
+### Phase 6 — Real-World Oracles + Hybrid Liquidity
+- UMA / Kleros integration for non-price market resolution
+- OpenBook CLOB exploration for high-volume markets
+
+---
 
 ## License
 
